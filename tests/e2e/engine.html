@@ -1,0 +1,60 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { background: #ffffff; color: #1f2328; }
+  .card { background-color: #f6f8fa; border: 1px solid #d0d7de; }
+  .btn { background: #1d9bf0; color: white; }
+  .btn2 { background: #1d9bf0; }
+  .link { color: #0969da; }
+  @media (min-width: 1px) { .media { color: #cf222e; } }
+  :root { --brand-bg: #f6f8fa; --label: "black"; }
+</style>
+<script src="../../extension/lib/color.js"></script>
+<script src="../../extension/lib/mapper.js"></script>
+<script src="../../extension/adapters/index.js"></script>
+<script src="../../extension/lib/engine.js"></script>
+</head>
+<body>
+  <div class="card" id="card">card</div>
+  <button class="btn" id="btn">btn</button>
+  <a class="link" id="link">link</a>
+  <span class="media" id="media">media</span>
+  <div id="inline" style="background-color: #ffffff; color: #000">inline</div>
+  <div class="late" id="late">late</div>
+  <pre id="out"></pre>
+<script>
+  const palette = { mode: "dark", colors: {
+    accent: "#8bcbb1", selection: "#2b5147", muted: "#64887b", background: "#142620",
+    dark_background: "#0f1e19", darker_background: "#0a1713", lighter_background: "#203b31",
+    foreground: "#dfede5", dark_foreground: "#91ad9f", light_foreground: "#bed6c9", bright_foreground: "#f0faf4",
+    red: "#d88d91", yellow: "#c5cc91", orange: "#d2ab8d", green: "#8bcbb1", cyan: "#86c7c5", blue: "#96b7d0", magenta: "#b7a1c8" } };
+  const engine = OWT.engine.createEngine({ palette, adapter: null, fetchCss: async () => null });
+  setTimeout(() => {
+    // Added through the CSSOM, as x.com does: no mutation fires for this.
+    document.styleSheets[0].insertRule(".late { color: #cf222e }", 0);
+    document.getElementById("inline").style.color = "#333333";
+  }, 100);
+  setTimeout(() => {
+    const cs = (id, p) => getComputedStyle(document.getElementById(id))[p];
+    const r = {
+      bodyBg: getComputedStyle(document.body).backgroundColor,
+      bodyFg: getComputedStyle(document.body).color,
+      cardBg: cs("card","backgroundColor"), cardBorder: cs("card","borderTopColor"),
+      btnBg: cs("btn","backgroundColor"), btnFg: cs("btn","color"),
+      link: cs("link","color"), media: cs("media","color"),
+      inlineBg: cs("inline","backgroundColor"), inlineFg: cs("inline","color"),
+      late: cs("late","color"),
+      brandVar: getComputedStyle(document.documentElement).getPropertyValue("--brand-bg"),
+      labelVar: getComputedStyle(document.documentElement).getPropertyValue("--label"),
+      adopted: document.adoptedStyleSheets.length,
+    };
+    engine.stop();
+    r.afterStopInlineBg = cs("inline","backgroundColor");
+    r.afterStopBody = getComputedStyle(document.body).backgroundColor;
+    document.getElementById("out").textContent = "RESULT" + JSON.stringify(r);
+  }, 2500);
+</script>
+</body>
+</html>

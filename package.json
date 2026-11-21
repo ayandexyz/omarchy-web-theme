@@ -1,0 +1,11 @@
+{
+  "name": "omarchy-web-theme",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Repaint websites in your current Omarchy theme, live.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/ && python3 -m unittest discover -s tests -p '*_test.py'",
+    "test:e2e": "tests/e2e/run.sh"
+  }
+}
