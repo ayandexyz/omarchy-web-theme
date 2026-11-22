@@ -1,10 +1,84 @@
-// Keeps a port open to the native host and mirrors its palette into
-// chrome.storage.local, which every content script listens to. An open native
-// port also keeps this service worker alive.
-importScripts("lib/color.js", "lib/catppuccin.js");
+// Mirrors the current Omarchy palette into chrome.storage.local, which every
+// content script listens to. The palette comes from the theme files directly
+// when the user allowed file URL access, otherwise from the native host.
+importScripts("lib/color.js", "lib/catppuccin.js", "lib/theme-files.js");
 
 const HOST = "io.github.ayandexyz.omarchy_web_theme";
 const RETRY_MS = 5000;
+const POLL_MS = 1000;
+
+// Toggling file URL access reloads the extension, so the source picked here
+// holds for this worker's whole life.
+async function start() {
+  if (await chrome.extension.isAllowedFileSchemeAccess()) watchFiles();
+  else connect();
+}
+
+// ---- Theme files (file:// access) -------------------------------------------
+
+let watching = false;
+let stateDir = null;
+let lastStamp = null;
+
+async function readFile(path) {
+  try {
+    const res = await fetch(`file://${path}`);
+    return res.ok ? await res.text() : null;
+  } catch {
+    return null;
+  }
+}
+
+const hasTheme = async (home) => (await readFile(`${home}/${OWT.themeFiles.STATE_DIR}/theme/colors.toml`)) !== null;
+
+// The extension can't ask for $HOME, so try the path the user gave, then every
+// directory under /home.
+async function findStateDir() {
+  const { homeDir } = await chrome.storage.local.get("homeDir");
+  const candidates = homeDir ? [homeDir.replace(/\/+$/, "")] : [];
+  const listing = await readFile("/home/");
+  if (listing) candidates.push(...OWT.themeFiles.listedDirs(listing).map((name) => `/home/${name}`));
+  for (const home of candidates) if (await hasTheme(home)) return `${home}/${OWT.themeFiles.STATE_DIR}`;
+  return null;
+}
+
+async function pollFiles() {
+  stateDir ??= await findStateDir();
+  if (!stateDir) {
+    if (lastStamp !== "no-theme") await chrome.storage.local.set({ fileError: "no-theme" });
+    lastStamp = "no-theme";
+    return;
+  }
+  const [colorsToml, name, generation] = await Promise.all([
+    readFile(`${stateDir}/theme/colors.toml`),
+    readFile(`${stateDir}/theme.name`),
+    readFile(`${stateDir}/theme.generation`),
+  ]);
+  if (colorsToml === null) {
+    stateDir = lastStamp = null;
+    return;
+  }
+  const stamp = `${generation}|${colorsToml}`;
+  if (stamp === lastStamp) return;
+  lastStamp = stamp;
+  const palette = OWT.themeFiles.buildPalette({ colorsToml, name: name || "", generation: generation || "" });
+  await chrome.storage.local.set({ palette, source: "files", fileError: null, hostError: null });
+}
+
+function watchFiles() {
+  if (watching) return;
+  watching = true;
+  // Each tick makes extension API calls, which also keeps this worker alive.
+  const tick = () => pollFiles().finally(() => setTimeout(tick, POLL_MS));
+  tick();
+}
+
+// A new path from the popup: look again right away.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && "homeDir" in changes) stateDir = lastStamp = null;
+});
+
+// ---- Native host ------------------------------------------------------------
 
 let port = null;
 let retry = null;
@@ -16,7 +90,7 @@ function connect() {
   port = chrome.runtime.connectNative(HOST);
   port.onMessage.addListener(async (message) => {
     if (message.type === "palette") {
-      await chrome.storage.local.set({ palette: message, hostError: null });
+      await chrome.storage.local.set({ palette: message, source: "host", hostError: null });
     } else if (message.type === "error") {
       await chrome.storage.local.set({ hostError: message.error });
     }
@@ -102,14 +176,14 @@ chrome.runtime.onMessage.addListener((message, _sender, reply) => {
     return true;
   }
   if (message.type === "reconnect") {
-    connect();
+    start();
     port?.postMessage({ type: "get" });
   }
 });
 
-// The alarm restarts the worker (and the port) if Chrome ever stopped it.
+// The alarm restarts the worker (and the palette source) if Chrome ever stopped it.
 chrome.alarms.create("keepalive", { periodInMinutes: 1 });
-chrome.alarms.onAlarm.addListener(connect);
-chrome.runtime.onStartup.addListener(connect);
-chrome.runtime.onInstalled.addListener(connect);
-connect();
+chrome.alarms.onAlarm.addListener(start);
+chrome.runtime.onStartup.addListener(start);
+chrome.runtime.onInstalled.addListener(start);
+start();

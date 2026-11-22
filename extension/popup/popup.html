@@ -51,6 +51,31 @@
         color: #e06c75;
         word-break: break-word;
       }
+      .setup {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+      .setup p {
+        margin: 0 0 8px;
+      }
+      .setup button,
+      .setup input {
+        font: inherit;
+        color: var(--fg);
+        background: var(--line);
+        border: 1px solid var(--muted);
+        border-radius: 4px;
+        padding: 4px 8px;
+      }
+      .setup form {
+        display: flex;
+        gap: 6px;
+      }
+      .setup form input {
+        flex: 1;
+        min-width: 0;
+      }
       .credit {
         font-size: 11px;
         padding-top: 6px;
@@ -71,6 +96,14 @@
       <input type="checkbox" id="community" />
     </label>
     <div class="muted credit" id="credit" hidden>Community styles from Catppuccin userstyles (MIT).</div>
+    <div class="setup" id="setup" hidden>
+      <p id="setup-text"></p>
+      <button id="open-settings" hidden>Open extension settings</button>
+      <form id="home-form" hidden>
+        <input id="home-dir" placeholder="/home/you" spellcheck="false" />
+        <button>Save</button>
+      </form>
+    </div>
     <div class="error" id="error" hidden></div>
     <script src="popup.js"></script>
   </body>

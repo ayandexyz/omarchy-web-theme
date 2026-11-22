@@ -13,15 +13,20 @@ extension handles the pages.
 ~/.local/state/omarchy/current/theme/colors.toml
         │  (watched: theme.generation bumps on every theme switch)
         ▼
-native host  ──stdio port──▶  background worker  ──storage──▶  content script, every tab
-(python)                      (caches the palette)              (engine + site adapters)
+file:// reads, or native host  ──▶  background worker  ──storage──▶  content script, every tab
+                                    (caches the palette)              (engine + site adapters)
 ```
 
-**Native host** (`host/omarchy-web-theme-host`). A browser extension can't read
-local files, so a small Python program sends the palette over Chrome's native
-messaging. The extension holds one long-lived connection open. The host sends
-the palette when that connection opens, and again within about a second of
-every theme change.
+**Theme files** (`extension/lib/theme-files.js`). With **Allow access to file
+URLs** turned on for the extension, the background worker reads `colors.toml`,
+`theme.name` and `theme.generation` itself, once a second. It finds your home
+folder by listing `/home`; if that fails, the popup asks for it.
+
+**Native host** (`host/omarchy-web-theme-host`), used when file URL access is
+off. A small Python program sends the palette over Chrome's native messaging.
+The extension holds one long-lived connection open. The host sends the palette
+when that connection opens, and again within about a second of every theme
+change.
 
 **General engine** (`extension/lib/engine.js`, `mapper.js`) handles any site:
 
@@ -90,37 +95,65 @@ Adapter CSS is applied after the engine's output, so it wins.
 
 ## Install
 
+Works in Chromium, Chrome, Brave, Edge and Vivaldi on Omarchy.
+
+**1. Get the code and build the community styles** (needs `git` and `npm`):
+
 ```bash
-./install.sh
+git clone https://github.com/ayandexyz/omarchy-web-theme.git
+cd omarchy-web-theme
+npm ci && npm run build:catppuccin
 ```
 
-This installs the native host and builds the community styles. The build needs
-`npm`; without it the extension still works, with only the general engine and
-the built-in adapters. To rebuild by hand: `npm ci && npm run build:catppuccin`.
-That fetches Catppuccin's userstyles at a pinned commit into `.cache/` and
-writes `extension/adapters/catppuccin/` (about 12 MB, git-ignored). Bump
-`COMMIT` in the script to update.
+**2. Load the extension:**
 
-1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and pick the `extension/` folder.
-3. Restart the browser once so it picks up the native host.
+1. Open `chrome://extensions` and turn on **Developer mode** (top right).
+2. Click **Load unpacked** and pick the `omarchy-web-theme/extension` folder.
 
-The extension ID is fixed by the `key` in `manifest.json`
-(`fkobbjpabkbibggchmmggiehdbnhjgkd`), which is what the native host allows.
-The toolbar popup shows the current palette, a global on/off switch, and an
-on/off switch for the current site.
+**3. Let it read your theme:**
 
-To remove it: run `./uninstall.sh`, then remove the extension in
-`chrome://extensions`.
+1. On the extension's card, click **Details**.
+2. Turn on **Allow access to file URLs**.
+3. Reload your open tabs.
+
+Pages now follow your Omarchy theme, and switch with it live. The toolbar
+popup shows the current palette and has on/off switches for everything and
+for the current site. If something is missing, the popup says what.
+
+**Updating:** `git pull && npm ci && npm run build:catppuccin`, then click the
+reload icon on the extension's card.
+
+**Uninstalling:** remove the extension in `chrome://extensions`. If you used
+the native host, also run `./uninstall.sh`.
+
+### Without file URL access: native host
+
+If you'd rather not turn on file URL access, a small Python program can send
+the palette instead (needs Python 3.11+, which Omarchy has). Run `./install.sh`
+(it also builds the community styles), then restart the browser once. The
+extension uses the host whenever file URL access is off.
+
+### Notes
+
+- Without `npm`, skip the build: the extension still works, with only the
+  general engine and the built-in adapters. The build fetches Catppuccin's
+  userstyles at a pinned commit into `.cache/` and writes
+  `extension/adapters/catppuccin/` (about 12 MB, git-ignored). Bump `COMMIT`
+  in `scripts/build-catppuccin.mjs` to update.
+- The extension finds your home folder by listing `/home`. If your home is
+  somewhere else, the popup asks for it.
+- The extension ID is fixed by the `key` in `manifest.json`
+  (`fkobbjpabkbibggchmmggiehdbnhjgkd`), which is what the native host allows.
 
 ## Tests
 
 ```bash
-npm test                 # color math, mapper, adapters, Catppuccin runtime (node)
-                         # + native host (python)
+npm test                 # color math, mapper, adapters, Catppuccin runtime,
+                         # theme file parsing (node) + native host (python)
 npm run check:catppuccin # every community style vs Catppuccin's own build
 npm run test:e2e         # headless Chromium: engine on a light page, the real
                          # extension + native host with a live theme switch,
+                         # the same reading theme files over file://,
                          # and a community style (paste.rs, served locally)
 ```
 

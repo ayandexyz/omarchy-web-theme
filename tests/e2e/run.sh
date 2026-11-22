@@ -3,6 +3,8 @@
 # End-to-end checks in headless Chromium:
 #   1. the engine alone on a light test page (no extension APIs)
 #   2. extension + native host on a served page, then a live theme switch
+#   3. extension reading the theme files itself (file URL access), same checks
+#   4. a Catppuccin community style recolored to the theme
 # Uses a throwaway profile and theme state; never touches your real ones.
 
 set -euo pipefail
@@ -83,6 +85,7 @@ OMARCHY_WEB_THEME_STATE_DIR="$WORK/state" "$CHROMIUM" --headless=new --no-sandbo
   --user-data-dir="$WORK/profile" --load-extension="$ROOT/extension" \
   --disable-extensions-except="$ROOT/extension" --remote-debugging-port="$debug_port" about:blank 2>/dev/null &
 pids+=($!)
+timeout 30 node "$ROOT/tests/e2e/ext.mjs" "$debug_port" host
 
 result=$(timeout 60 node "$ROOT/tests/e2e/cdp.mjs" "$debug_port" "http://127.0.0.1:$port/" "$WORK/state")
 node -e '
@@ -94,6 +97,32 @@ check(before.text, "rgb(223, 237, 229)", "body text");
 check(after.body, "rgb(42, 20, 24)", "page background after theme switch");
 process.exit(bad ? 1 : 0);
 ' "$result" || fail "extension end-to-end"
+echo "ok"
+
+echo "== extension reading theme files (file URL access), live theme switch"
+# Same start palette as above, under a fake home; no native host in this profile.
+mkdir -p "$WORK/home/.local/state/omarchy/current" "$WORK/profile3"
+cp -r "$WORK/state/." "$WORK/home/.local/state/omarchy/current/"
+sed -i 's/^background = .*/background = "#142620"/' "$WORK/home/.local/state/omarchy/current/theme/colors.toml"
+echo 1 >"$WORK/home/.local/state/omarchy/current/theme.generation"
+debug_port3=$((port + 4))
+"$CHROMIUM" --headless=new --no-sandbox --disable-gpu \
+  --user-data-dir="$WORK/profile3" --load-extension="$ROOT/extension" \
+  --disable-extensions-except="$ROOT/extension" --remote-debugging-port="$debug_port3" about:blank 2>/dev/null &
+pids+=($!)
+timeout 30 node "$ROOT/tests/e2e/ext.mjs" "$debug_port3" files "$WORK/home"
+
+result=$(timeout 60 node "$ROOT/tests/e2e/cdp.mjs" "$debug_port3" "http://127.0.0.1:$port/" \
+  "$WORK/home/.local/state/omarchy/current")
+node -e '
+const { before, after } = JSON.parse(process.argv[1]);
+let bad = 0;
+const check = (got, want, what) => { if (got !== want) { console.error(`  ${what}: got ${got}, want ${want}`); bad++; } };
+check(before.body, "rgb(20, 38, 32)", "page background");
+check(before.text, "rgb(223, 237, 229)", "body text");
+check(after.body, "rgb(42, 20, 24)", "page background after theme switch");
+process.exit(bad ? 1 : 0);
+' "$result" || fail "extension reading theme files"
 echo "ok"
 
 echo "== community style (Catppuccin paste.rs) in the theme palette"
@@ -115,6 +144,7 @@ OMARCHY_WEB_THEME_STATE_DIR="$WORK/state" "$CHROMIUM" --headless=new --no-sandbo
   --disable-extensions-except="$ROOT/extension" --remote-debugging-port="$debug_port2" \
   --host-resolver-rules="MAP paste.rs 127.0.0.1:$port2" --disable-features=HttpsUpgrades about:blank 2>/dev/null &
 pids+=($!)
+timeout 30 node "$ROOT/tests/e2e/ext.mjs" "$debug_port2" host
 
 result=$(OWT_READ='JSON.stringify({
   body: getComputedStyle(document.body).backgroundColor,
