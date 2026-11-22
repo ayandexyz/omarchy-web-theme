@@ -8,7 +8,7 @@
     "build:catppuccin": "node scripts/build-catppuccin.mjs",
     "check:catppuccin": "node scripts/check-catppuccin.mjs",
     "package": "node scripts/package.mjs",
-    "test": "node --test tests/ && python3 -m unittest discover -s tests -p \"*_test.py\"",
+    "test": "node --test tests/*.test.js && python3 -m unittest discover -s tests -p \"*_test.py\"",
     "test:e2e": "tests/e2e/run.sh"
   },
   "devDependencies": {
