@@ -19,23 +19,27 @@ const SWATCHES = [
 
 const $ = (id) => document.getElementById(id);
 
-async function currentHost() {
+async function currentTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   try {
-    return new URL(tab.url).hostname;
+    return { host: new URL(tab.url).hostname, href: tab.url };
   } catch {
-    return "";
+    return { host: "", href: "" };
   }
 }
 
+const toggle = (list, item, on) => (on ? list.filter((h) => h !== item) : [...new Set([...list, item])]);
+
 async function render() {
-  const host = await currentHost();
-  const { palette, enabled = true, disabledHosts = [], hostError } = await chrome.storage.local.get([
+  const { host, href } = await currentTab();
+  const { palette, enabled = true, disabledHosts = [], plainHosts = [], hostError } = await chrome.storage.local.get([
     "palette",
     "enabled",
     "disabledHosts",
+    "plainHosts",
     "hostError",
   ]);
+  const community = href ? await chrome.runtime.sendMessage({ type: "catppuccin", href }).catch(() => null) : null;
 
   if (palette?.colors) {
     const c = palette.colors;
@@ -66,11 +70,15 @@ async function render() {
   $("error").hidden = !hostError || !!palette;
   $("error").textContent = `Native host: ${hostError}. Run install.sh, then restart the browser.`;
 
+  $("community-row").hidden = $("credit").hidden = !community?.id;
+  $("community-name").textContent = community ? `(${community.name})` : "";
+  $("community").checked = !plainHosts.includes(host);
+  $("community").disabled = !enabled || disabledHosts.includes(host);
+
   $("enabled").onchange = (e) => chrome.storage.local.set({ enabled: e.target.checked });
-  $("site").onchange = (e) =>
-    chrome.storage.local.set({
-      disabledHosts: e.target.checked ? disabledHosts.filter((h) => h !== host) : [...disabledHosts, host],
-    });
+  $("site").onchange = (e) => chrome.storage.local.set({ disabledHosts: toggle(disabledHosts, host, e.target.checked) });
+  // Off falls back to the built-in adapter or the general engine.
+  $("community").onchange = (e) => chrome.storage.local.set({ plainHosts: toggle(plainHosts, host, e.target.checked) });
 }
 
 chrome.runtime.sendMessage({ type: "reconnect" }).catch(() => {});

@@ -1,8 +1,13 @@
 // The general engine. It never edits a site's own rules: it reads every color
 // declaration from the page's stylesheets, maps it through the palette, and
-// writes the result into one override sheet with the same selectors and
-// !important. Inline style attributes are rewritten in place, keeping the
-// originals so a theme change or toggle-off can restore them.
+// writes the result into one override sheet with the same selectors. That
+// sheet is adopted, so it cascades after all of the page's own CSS: with equal
+// specificity it wins without !important, which it only copies from the
+// original declaration. So an adapter (a Catppuccin community style, with its
+// more specific selectors) layered on top still wins wherever it says
+// something, and the engine fills in what it doesn't cover.
+// Inline style attributes are rewritten in place, keeping the originals so a
+// theme change or toggle-off can restore them.
 (function (root) {
   const OWT = (root.OWT = root.OWT || {});
 
@@ -54,38 +59,28 @@
       if (parsed) slots[name] = color.format(parsed);
     }
 
-    function makeStyle(id) {
-      const el = doc.createElement("style");
-      el.id = id;
-      el.dataset.owt = "";
-      (doc.head || doc.documentElement).appendChild(el);
-      return el;
-    }
-
-    // Shown immediately so a page does not flash its own background before the
-    // first scan. The body rule is dropped once the real mapping is in place.
-    const early = makeStyle("omarchy-web-theme-early");
+    // Every sheet of ours is a constructed, adopted sheet: adopted sheets
+    // cascade after every document sheet (so ties, !important ones included,
+    // go to us), and moving elements around can't drop insertRule() rules.
+    //   early    page background before the first scan, so nothing flashes;
+    //            its body rule is dropped once the real mapping is in
+    //   out      the general engine's mapped rules
+    //   adapter  a site adapter or community style, on top of the engine
+    //   extra    add-on styles (other extensions' UI), on top of everything
     const generic = adapter?.generic !== false;
     const scheme = palette.mode === "light" ? "light" : "dark";
-    early.textContent =
-      `html { background-color: ${slots.background} !important; color-scheme: ${scheme}; }` +
-      (generic ? `\nbody { background-color: ${slots.background} !important; }` : "");
-
-    // Constructed sheets: adopted sheets cascade after every document sheet,
-    // so ties between !important rules always go to us, and moving <style>
-    // elements around can't drop rules added with insertRule().
+    const htmlRule = `html { background-color: ${slots.background} !important; color-scheme: ${scheme}; }`;
+    const early = new CSSStyleSheet();
+    early.replaceSync(htmlRule + (generic ? ` body { background-color: ${slots.background} !important; }` : ""));
     let out = null;
     let adapterSheet = null;
+    let extraSheet = null;
 
     function keepAdopted() {
-      const ours = [out, adapterSheet].filter(Boolean);
+      const ours = [early, out, adapterSheet, extraSheet].filter(Boolean);
       const current = doc.adoptedStyleSheets;
       if (ours.every((s, i) => current[current.length - ours.length + i] === s)) return;
       doc.adoptedStyleSheets = [...current.filter((s) => !ours.includes(s)), ...ours];
-    }
-
-    function ownSheet(sheet) {
-      return sheet.ownerNode?.dataset && "owt" in sheet.ownerNode.dataset;
     }
 
     function rulesOf(sheet) {
@@ -131,7 +126,6 @@
     function* allRules() {
       const sheets = [...doc.styleSheets].map((sheet) => ({ sheet, media: sheet.media?.mediaText }));
       for (const { sheet, media } of [...sheets, ...fetchedSheets]) {
-        if (ownSheet(sheet)) continue;
         const rules = rulesOf(sheet);
         if (!rules) continue;
         const wrappers = media && media !== "all" ? [`@media ${media}`] : [];
@@ -147,7 +141,7 @@
         const value = style.getPropertyValue(prop);
         // Custom properties with quotes are strings, not colors ("black friday").
         if (!value || (prop.startsWith("--") && /["']/.test(value))) continue;
-        found.push([prop, value]);
+        found.push([prop, value, style.getPropertyPriority(prop)]);
       }
       return found;
     }
@@ -174,8 +168,8 @@
 
     // The site's own page background and body text, read with our sheets off.
     function siteBase() {
-      early.disabled = true;
-      out && (out.disabled = true);
+      const ours = [early, out, adapterSheet, extraSheet].filter(Boolean);
+      for (const s of ours) s.disabled = true;
       let background = null;
       for (const el of [doc.body, doc.documentElement]) {
         if (!el) continue;
@@ -186,8 +180,7 @@
         }
       }
       const text = color.parse(getComputedStyle(doc.body || doc.documentElement).color);
-      early.disabled = false;
-      out && (out.disabled = false);
+      for (const s of ours) s.disabled = false;
       // Nothing painted: the browser default canvas, white in a light scheme.
       if (!background && !matchMedia("(prefers-color-scheme: dark)").matches) {
         background = { r: 255, g: 255, b: 255, a: 1 };
@@ -212,9 +205,9 @@
         processed.add(rule);
 
         const decls = [];
-        for (const [prop, value] of colorDeclarations(rule.style)) {
+        for (const [prop, value, priority] of colorDeclarations(rule.style)) {
           const mapped = mapper.mapValue(value, prop);
-          if (mapped !== value) decls.push(`${prop}: ${mapped} !important`);
+          if (mapped !== value) decls.push(`${prop}: ${mapped}${priority ? " !important" : ""}`);
         }
         if (!decls.length) continue;
 
@@ -246,9 +239,9 @@
           previous[prop] && previousMapped[prop] === value ? previous[prop] : [value, style.getPropertyPriority(prop)];
       }
 
-      for (const [prop, [value]] of Object.entries(originals)) {
+      for (const [prop, [value, priority]] of Object.entries(originals)) {
         mapped[prop] = mapper.mapValue(value, prop);
-        if (mapped[prop] !== style.getPropertyValue(prop)) style.setProperty(prop, mapped[prop], "important");
+        if (mapped[prop] !== style.getPropertyValue(prop)) style.setProperty(prop, mapped[prop], priority);
       }
       inlineOriginals.set(el, originals);
       inlineMapped.set(el, mapped);
@@ -296,16 +289,56 @@
       }
     }
 
+    let stopped = false;
+
+    // The adapter needs no page CSS to work from, so it goes on at
+    // document_start and the page never shows its own colors first.
+    if (adapter?.css) {
+      adapterSheet = new CSSStyleSheet();
+      adapterSheet.replaceSync(adapter.css(slots));
+    }
+    if (adapter?.extra) {
+      extraSheet = new CSSStyleSheet();
+      extraSheet.replaceSync(adapter.extra);
+    }
+    keepAdopted();
+
+    // Sites switch their own light/dark mode with an attribute on <html> or
+    // <body> (YouTube's `dark`, GitHub's `data-color-mode`), without a reload.
+    // The mapping depends on which one the site is in, so redo it on a switch.
+    const MODE_CHECK_MS = 250;
+    let modeObserver = null;
+    let modeTimer = null;
+    function watchMode() {
+      modeObserver = new MutationObserver((mutations) => {
+        if (mutations.every((m) => m.attributeName === "style")) return;
+        clearTimeout(modeTimer);
+        modeTimer = setTimeout(() => {
+          if (!out || siteDark(siteBase().background) === mapper.siteDark) return;
+          out.replaceSync("");
+          processed = new WeakSet();
+          for (const el of doc.querySelectorAll("[style]")) restoreInline(el);
+          buildMapper();
+          scan();
+        }, MODE_CHECK_MS);
+      });
+      for (const el of [doc.documentElement, doc.body]) if (el) modeObserver.observe(el, { attributes: true });
+    }
+
+    function siteDark(background) {
+      return background ? color.toOklch(background).l < 0.5 : palette.mode !== "light";
+    }
+
     function start() {
+      if (stopped) return;
       out = new CSSStyleSheet();
-      if (adapter?.css) {
-        adapterSheet = new CSSStyleSheet();
-        adapterSheet.replaceSync(adapter.css(slots));
+      if (generic) {
+        buildMapper();
+        watchMode();
       }
-      if (generic) buildMapper();
       scan();
       // Real mapping is in: the html rule stays as the base, the body rule goes.
-      early.textContent = early.textContent.split("\n")[0];
+      early.replaceSync(htmlRule);
 
       observer = new MutationObserver(onMutations);
       observer.observe(doc.documentElement, {
@@ -320,13 +353,16 @@
     }
 
     function stop() {
+      stopped = true;
+      doc.removeEventListener("DOMContentLoaded", start);
       observer?.disconnect();
+      modeObserver?.disconnect();
+      clearTimeout(modeTimer);
       clearInterval(timer);
       for (const el of doc.querySelectorAll("[style]")) restoreInline(el);
-      early.remove();
-      const ours = [out, adapterSheet];
+      const ours = [early, out, adapterSheet, extraSheet];
       doc.adoptedStyleSheets = doc.adoptedStyleSheets.filter((s) => !ours.includes(s));
-      out = adapterSheet = null;
+      out = adapterSheet = extraSheet = null;
       processed = new WeakSet();
     }
 

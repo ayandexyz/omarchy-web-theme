@@ -1,5 +1,6 @@
 // Minimal DevTools-protocol client: open a page, evaluate, report computed colors.
 // Usage: node cdp.mjs <debug-port> <url> [state-dir-to-switch-theme-in]
+// OWT_READ overrides the expression evaluated in the page.
 import { execFileSync } from "node:child_process";
 import { writeFileSync, readFileSync } from "node:fs";
 
@@ -32,7 +33,7 @@ const send = (method, params = {}) =>
 const evaluate = async (expression) =>
   JSON.parse((await send("Runtime.evaluate", { expression })).result.result.value);
 
-const READ = `JSON.stringify({
+const READ = process.env.OWT_READ || `JSON.stringify({
   body: getComputedStyle(document.body).backgroundColor,
   text: getComputedStyle(document.body).color,
   button: getComputedStyle(document.getElementById("c")).backgroundColor,

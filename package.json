@@ -5,7 +5,12 @@
   "description": "Repaint websites in your current Omarchy theme, live.",
   "license": "MIT",
   "scripts": {
-    "test": "node --test tests/ && python3 -m unittest discover -s tests -p '*_test.py'",
+    "build:catppuccin": "node scripts/build-catppuccin.mjs",
+    "check:catppuccin": "node scripts/check-catppuccin.mjs",
+    "test": "node --test tests/ && python3 -m unittest discover -s tests -p \"*_test.py\"",
     "test:e2e": "tests/e2e/run.sh"
+  },
+  "devDependencies": {
+    "less": "4.2.0"
   }
 }

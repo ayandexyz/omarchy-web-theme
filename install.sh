@@ -30,6 +30,16 @@ python3 -c 'import tomllib' 2>/dev/null || {
   exit 1
 }
 
+# Community styles: compile Catppuccin's userstyles (pinned) for any palette.
+# Without node the extension still works, with the general engine only.
+if command -v npm >/dev/null; then
+  echo "Building Catppuccin community styles..."
+  (cd "$REPO_DIR" && npm ci --silent --no-fund --no-audit && npm run --silent build:catppuccin) ||
+    echo "omarchy-web-theme: community style build failed; continuing without them" >&2
+else
+  echo "omarchy-web-theme: npm not found; skipping community styles (general engine only)" >&2
+fi
+
 install -Dm755 "$REPO_DIR/host/omarchy-web-theme-host" "$HOST_PATH"
 manifest=$(sed "s|__HOST_PATH__|$HOST_PATH|g" "$TEMPLATE")
 
