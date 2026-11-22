@@ -83,13 +83,14 @@ written by hand for each site, built here so they use any Omarchy palette:
 Mocha and Latte colors and compares it, color for color, with Catppuccin's own
 LESS build. All 135 match.
 
-**Adapters** (`extension/adapters/index.js`) refine sites without a community
-style, or ones where you turned it off:
+**Adapters** (`extension/adapters/index.js`) are hand-written refinements for
+sites without a community style, or ones where you turned it off. None ship by
+default, so every site is treated the same: its community style when one
+matches, and the general engine always. An adapter can have:
 
-- `colorMap`: exact site colors mapped to palette slots. Used for x.com, whose
-  atomic CSS has fixed colors.
-- `css`: points a site's own CSS variables at the palette. Used for GitHub's
-  Primer variables and YouTube's `--yt-spec-*` variables.
+- `colorMap`: exact site colors mapped to palette slots, for sites whose CSS
+  has fixed colors.
+- `css`: points a site's own CSS variables at the palette.
 
 Adapter CSS is applied after the engine's output, so it wins.
 
@@ -146,7 +147,7 @@ is off. It works with the release zip too, which keeps the same extension ID.
 ### Notes
 
 - Without `npm`, skip the build: the extension still works, with only the
-  general engine and the built-in adapters. The build fetches Catppuccin's
+  general engine. The build fetches Catppuccin's
   userstyles at a pinned commit into `.cache/` and writes
   `extension/adapters/catppuccin/` (about 12 MB, git-ignored). Bump `COMMIT`
   in `scripts/build-catppuccin.mjs` to update.

@@ -119,18 +119,15 @@ test("mapValue rewrites every color in a value", () => {
   assert.match(out, /^0 1px 2px rgba\(/);
 });
 
-test("x.com adapter maps its fixed colors to exact slots", () => {
-  const x = adapterFor("x.com");
-  const m = createMapper(palette, { baseBackground: color.parse("#000"), colorMap: x.colorMap });
+test("colorMap maps fixed colors to exact slots", () => {
+  const colorMap = { "29,155,240": "accent", "47,51,54": "selection" };
+  const m = createMapper(palette, { baseBackground: color.parse("#000"), colorMap });
   assert.equal(m.map("rgb(29, 155, 240)", "text"), rgbOf("#8bcbb1"));
   assert.equal(m.map("rgb(47, 51, 54)", "border"), rgbOf("#2b5147"));
-  assert.equal(adapterFor("example.com"), null);
 });
 
-test("adapter css fills every variable with a palette color", () => {
-  const slots = Object.fromEntries(Object.entries(palette.colors).map(([k, v]) => [k, rgbOf(v)]));
-  for (const host of ["github.com", "www.youtube.com"]) {
-    const css = adapterFor(host).css(slots);
-    assert.doesNotMatch(css, /undefined/, host);
+test("no site gets a built-in adapter", () => {
+  for (const host of ["x.com", "github.com", "www.youtube.com", "example.com"]) {
+    assert.equal(adapterFor(host), null, host);
   }
 });

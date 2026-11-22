@@ -1,6 +1,6 @@
 {
   "name": "omarchy-web-theme",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Repaint websites in your current Omarchy theme, live.",
   "license": "MIT",

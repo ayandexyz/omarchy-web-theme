@@ -100,7 +100,7 @@ async function render() {
 
   $("enabled").onchange = (e) => chrome.storage.local.set({ enabled: e.target.checked });
   $("site").onchange = (e) => chrome.storage.local.set({ disabledHosts: toggle(disabledHosts, host, e.target.checked) });
-  // Off falls back to the built-in adapter or the general engine.
+  // Off falls back to the general engine.
   $("community").onchange = (e) => chrome.storage.local.set({ plainHosts: toggle(plainHosts, host, e.target.checked) });
   $("open-settings").onclick = () => chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` });
   $("home-form").onsubmit = (e) => {
