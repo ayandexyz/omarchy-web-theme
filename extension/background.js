@@ -23,7 +23,8 @@ let lastStamp = null;
 async function readFile(path) {
   try {
     const res = await fetch(`file://${path}`);
-    return res.ok ? await res.text() : null;
+    // Directory listings come back with status 0; missing paths throw.
+    return res.ok || res.status === 0 ? await res.text() : null;
   } catch {
     return null;
   }
