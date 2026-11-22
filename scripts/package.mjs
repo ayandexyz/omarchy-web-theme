@@ -1,8 +1,8 @@
 // Package the extension for release, after `npm run build:catppuccin`:
-//   dist/omarchy-web-theme-<version>.zip        Load unpacked. Keeps the manifest
+//   dist/theme-everywhere-<version>.zip        Load unpacked. Keeps the manifest
 //                                               `key`, so the ID matches what the
 //                                               native host allows.
-//   dist/omarchy-web-theme-<version>-store.zip  Chrome Web Store upload. The store
+//   dist/theme-everywhere-<version>-store.zip  Chrome Web Store upload. The store
 //                                               rejects `key` and assigns its own ID.
 // Usage: node scripts/package.mjs [tag]   # tag (e.g. v0.1.0) must match the version
 import { execFileSync } from "node:child_process";
@@ -41,5 +41,5 @@ function build(name, edit) {
   console.log(`wrote ${zip.slice(ROOT.length + 1)}`);
 }
 
-build(`omarchy-web-theme-${version}`);
-build(`omarchy-web-theme-${version}-store`, (m) => delete m.key);
+build(`theme-everywhere-${version}`);
+build(`theme-everywhere-${version}-store`, (m) => delete m.key);

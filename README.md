@@ -1,4 +1,4 @@
-# Omarchy Web Theme
+# Theme Everywhere
 
 Repaints the websites you visit in your current Omarchy theme, and repaints them
 again the moment you switch themes, with no reload.
@@ -98,17 +98,17 @@ Adapter CSS is applied after the engine's output, so it wins.
 
 Works in Chromium, Chrome, Brave, Edge and Vivaldi on Omarchy.
 
-1. Download `omarchy-web-theme-<version>.zip` from the
-   [latest release](https://github.com/ayandexyz/omarchy-web-theme/releases/latest)
+1. Download `theme-everywhere-<version>.zip` from the
+   [latest release](https://github.com/ayandexyz/theme-everywhere/releases/latest)
    and unzip it somewhere it can stay:
 
    ```bash
-   mkdir -p ~/.local/share/omarchy-web-theme
-   unzip omarchy-web-theme-*.zip -d ~/.local/share/omarchy-web-theme/extension
+   mkdir -p ~/.local/share/theme-everywhere
+   unzip theme-everywhere-*.zip -d ~/.local/share/theme-everywhere/extension
    ```
 
 2. Open `chrome://extensions`, turn on **Developer mode** (top right), click
-   **Load unpacked**, and pick `~/.local/share/omarchy-web-theme/extension`.
+   **Load unpacked**, and pick `~/.local/share/theme-everywhere/extension`.
 3. Click **Details** on the extension and turn on **Allow access to file URLs**.
 4. Reload your open tabs.
 
@@ -127,8 +127,8 @@ the native host, also run `./uninstall.sh` from a clone of this repo.
 Needs `git` and `npm`:
 
 ```bash
-git clone https://github.com/ayandexyz/omarchy-web-theme.git
-cd omarchy-web-theme
+git clone https://github.com/ayandexyz/theme-everywhere.git
+cd theme-everywhere
 npm ci && npm run build:catppuccin
 ```
 

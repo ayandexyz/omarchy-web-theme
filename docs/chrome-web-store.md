@@ -2,12 +2,12 @@
 
 Text to paste into the developer dashboard
 (https://chrome.google.com/webstore/devconsole). Upload
-`omarchy-web-theme-<version>-store.zip` from the GitHub release: it is the
+`theme-everywhere-<version>-store.zip` from the GitHub release: it is the
 same extension without the manifest `key`, which the store rejects.
 
 ## Store listing
 
-**Name:** Omarchy Web Theme
+**Name:** Theme Everywhere
 
 **Summary** (132 characters max):
 
@@ -17,7 +17,7 @@ same extension without the manifest `key`, which the store rejects.
 
 **Description:**
 
-> Omarchy already themes your terminal, editor and browser toolbar. Omarchy Web Theme does the same for the pages themselves: every site you visit takes on your current Omarchy palette, and switches with it live when you change themes. No reload needed.
+> Omarchy already themes your terminal, editor and browser toolbar. Theme Everywhere does the same for the pages themselves: every site you visit takes on your current Omarchy palette, and switches with it live when you change themes. No reload needed.
 >
 > • Works on any site: colors are remapped by role (backgrounds, text, accents), so pages stay readable and keep their structure.
 > • 135 sites get hand-made styles (GitHub, YouTube, X, Reddit, Wikipedia, Gmail, Stack Overflow, MDN, ChatGPT and more), adapted from Catppuccin's userstyles to your palette.
@@ -26,7 +26,7 @@ same extension without the manifest `key`, which the store rejects.
 >
 > Setup: after installing, open the extension's Details on chrome://extensions and turn on "Allow access to file URLs". The extension reads your theme from ~/.local/state/omarchy/current and nothing else on disk.
 >
-> Requires Omarchy (https://omarchy.org). Open source: https://github.com/ayandexyz/omarchy-web-theme
+> Requires Omarchy (https://omarchy.org). Open source: https://github.com/ayandexyz/theme-everywhere
 
 **Icon:** `extension/icons/icon-128.png`
 
@@ -58,7 +58,7 @@ that data is not sold, not used for unrelated purposes, and not used for
 creditworthiness.
 
 **Privacy policy URL:**
-https://github.com/ayandexyz/omarchy-web-theme/blob/master/PRIVACY.md
+https://github.com/ayandexyz/theme-everywhere/blob/master/PRIVACY.md
 
 ## After the first upload
 

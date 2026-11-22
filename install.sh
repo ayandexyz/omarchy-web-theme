@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Install the Omarchy Web Theme native messaging host for every Chromium-based
+# Install the Theme Everywhere native messaging host for every Chromium-based
 # browser that has a profile on this machine.
 
 set -euo pipefail
@@ -26,7 +26,7 @@ browser_dirs=(
 )
 
 python3 -c 'import tomllib' 2>/dev/null || {
-  echo "omarchy-web-theme: python 3.11+ is required (tomllib)" >&2
+  echo "theme-everywhere: python 3.11+ is required (tomllib)" >&2
   exit 1
 }
 
@@ -35,9 +35,9 @@ python3 -c 'import tomllib' 2>/dev/null || {
 if command -v npm >/dev/null; then
   echo "Building Catppuccin community styles..."
   (cd "$REPO_DIR" && npm ci --silent --no-fund --no-audit && npm run --silent build:catppuccin) ||
-    echo "omarchy-web-theme: community style build failed; continuing without them" >&2
+    echo "theme-everywhere: community style build failed; continuing without them" >&2
 else
-  echo "omarchy-web-theme: npm not found; skipping community styles (general engine only)" >&2
+  echo "theme-everywhere: npm not found; skipping community styles (general engine only)" >&2
 fi
 
 install -Dm755 "$REPO_DIR/host/omarchy-web-theme-host" "$HOST_PATH"

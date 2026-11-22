@@ -1,6 +1,6 @@
 {
   "name": "io.github.ayandexyz.omarchy_web_theme",
-  "description": "Omarchy Web Theme palette host",
+  "description": "Theme Everywhere palette host",
   "path": "__HOST_PATH__",
   "type": "stdio",
   "allowed_origins": [

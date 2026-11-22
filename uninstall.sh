@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Remove the Omarchy Web Theme native host. Remove the extension itself from
+# Remove the Theme Everywhere native host. Remove the extension itself from
 # chrome://extensions.
 
 set -euo pipefail

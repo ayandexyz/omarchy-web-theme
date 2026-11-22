@@ -2,7 +2,7 @@
 
 _Last updated: 2026-11-22_
 
-Omarchy Web Theme collects no data. It has no servers, no analytics and no
+Theme Everywhere collects no data. It has no servers, no analytics and no
 accounts, and it sends nothing to the developer or anyone else.
 
 ## What it reads
@@ -29,4 +29,4 @@ folder path if you typed one in. Removing the extension deletes all of it.
 ## Contact
 
 Questions: open an issue at
-https://github.com/ayandexyz/omarchy-web-theme/issues
+https://github.com/ayandexyz/theme-everywhere/issues
