@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Theme Everywhere",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Repaints websites in your current Omarchy theme, live.",
   "homepage_url": "https://github.com/ayandexyz/theme-everywhere",
   "icons": {
