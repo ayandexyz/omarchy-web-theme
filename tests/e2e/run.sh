@@ -11,6 +11,8 @@ set -euo pipefail
 
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 CHROMIUM=${OWT_CHROMIUM:-$(command -v chromium || command -v google-chrome-stable)}
+# OWT_EXTENSION tests another copy, e.g. an unzipped release.
+EXT=${OWT_EXTENSION:-$ROOT/extension}
 WORK=$(mktemp -d)
 pids=()
 cleanup() {
@@ -82,8 +84,8 @@ port=$((20000 + RANDOM % 20000))
 pids+=($!)
 debug_port=$((port + 1))
 OMARCHY_WEB_THEME_STATE_DIR="$WORK/state" "$CHROMIUM" --headless=new --no-sandbox --disable-gpu \
-  --user-data-dir="$WORK/profile" --load-extension="$ROOT/extension" \
-  --disable-extensions-except="$ROOT/extension" --remote-debugging-port="$debug_port" about:blank 2>/dev/null &
+  --user-data-dir="$WORK/profile" --load-extension="$EXT" \
+  --disable-extensions-except="$EXT" --remote-debugging-port="$debug_port" about:blank 2>/dev/null &
 pids+=($!)
 timeout 30 node "$ROOT/tests/e2e/ext.mjs" "$debug_port" host
 
@@ -107,8 +109,8 @@ sed -i 's/^background = .*/background = "#142620"/' "$WORK/home/.local/state/oma
 echo 1 >"$WORK/home/.local/state/omarchy/current/theme.generation"
 debug_port3=$((port + 4))
 "$CHROMIUM" --headless=new --no-sandbox --disable-gpu \
-  --user-data-dir="$WORK/profile3" --load-extension="$ROOT/extension" \
-  --disable-extensions-except="$ROOT/extension" --remote-debugging-port="$debug_port3" about:blank 2>/dev/null &
+  --user-data-dir="$WORK/profile3" --load-extension="$EXT" \
+  --disable-extensions-except="$EXT" --remote-debugging-port="$debug_port3" about:blank 2>/dev/null &
 pids+=($!)
 timeout 30 node "$ROOT/tests/e2e/ext.mjs" "$debug_port3" files "$WORK/home"
 
@@ -126,7 +128,7 @@ process.exit(bad ? 1 : 0);
 echo "ok"
 
 echo "== community style (Catppuccin paste.rs) in the theme palette"
-if [[ ! -f $ROOT/extension/adapters/catppuccin/index.json ]]; then
+if [[ ! -f $EXT/adapters/catppuccin/index.json ]]; then
   echo "skipped: run npm run build:catppuccin first"
   exit 0
 fi
@@ -140,8 +142,8 @@ pids+=($!)
 debug_port2=$((port + 3))
 # paste.rs resolves to the local server; nothing leaves the machine.
 OMARCHY_WEB_THEME_STATE_DIR="$WORK/state" "$CHROMIUM" --headless=new --no-sandbox --disable-gpu \
-  --user-data-dir="$WORK/profile2" --load-extension="$ROOT/extension" \
-  --disable-extensions-except="$ROOT/extension" --remote-debugging-port="$debug_port2" \
+  --user-data-dir="$WORK/profile2" --load-extension="$EXT" \
+  --disable-extensions-except="$EXT" --remote-debugging-port="$debug_port2" \
   --host-resolver-rules="MAP paste.rs 127.0.0.1:$port2" --disable-features=HttpsUpgrades about:blank 2>/dev/null &
 pids+=($!)
 timeout 30 node "$ROOT/tests/e2e/ext.mjs" "$debug_port2" host

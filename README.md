@@ -97,7 +97,33 @@ Adapter CSS is applied after the engine's output, so it wins.
 
 Works in Chromium, Chrome, Brave, Edge and Vivaldi on Omarchy.
 
-**1. Get the code and build the community styles** (needs `git` and `npm`):
+1. Download `omarchy-web-theme-<version>.zip` from the
+   [latest release](https://github.com/ayandexyz/omarchy-web-theme/releases/latest)
+   and unzip it somewhere it can stay:
+
+   ```bash
+   mkdir -p ~/.local/share/omarchy-web-theme
+   unzip omarchy-web-theme-*.zip -d ~/.local/share/omarchy-web-theme/extension
+   ```
+
+2. Open `chrome://extensions`, turn on **Developer mode** (top right), click
+   **Load unpacked**, and pick `~/.local/share/omarchy-web-theme/extension`.
+3. Click **Details** on the extension and turn on **Allow access to file URLs**.
+4. Reload your open tabs.
+
+Pages now follow your Omarchy theme, and switch with it live. The toolbar
+popup shows the current palette and has on/off switches for everything and
+for the current site. If something is missing, the popup says what.
+
+**Updating:** unzip the new release over the old folder, then click the reload
+icon on the extension's card.
+
+**Uninstalling:** remove the extension in `chrome://extensions`. If you used
+the native host, also run `./uninstall.sh` from a clone of this repo.
+
+### From source
+
+Needs `git` and `npm`:
 
 ```bash
 git clone https://github.com/ayandexyz/omarchy-web-theme.git
@@ -105,33 +131,17 @@ cd omarchy-web-theme
 npm ci && npm run build:catppuccin
 ```
 
-**2. Load the extension:**
-
-1. Open `chrome://extensions` and turn on **Developer mode** (top right).
-2. Click **Load unpacked** and pick the `omarchy-web-theme/extension` folder.
-
-**3. Let it read your theme:**
-
-1. On the extension's card, click **Details**.
-2. Turn on **Allow access to file URLs**.
-3. Reload your open tabs.
-
-Pages now follow your Omarchy theme, and switch with it live. The toolbar
-popup shows the current palette and has on/off switches for everything and
-for the current site. If something is missing, the popup says what.
-
-**Updating:** `git pull && npm ci && npm run build:catppuccin`, then click the
-reload icon on the extension's card.
-
-**Uninstalling:** remove the extension in `chrome://extensions`. If you used
-the native host, also run `./uninstall.sh`.
+Then follow steps 2 to 4 above, picking the repo's `extension/` folder. To
+update: `git pull && npm ci && npm run build:catppuccin`, then reload the
+extension.
 
 ### Without file URL access: native host
 
 If you'd rather not turn on file URL access, a small Python program can send
-the palette instead (needs Python 3.11+, which Omarchy has). Run `./install.sh`
-(it also builds the community styles), then restart the browser once. The
-extension uses the host whenever file URL access is off.
+the palette instead (needs Python 3.11+, which Omarchy has). From a clone of
+this repo, run `./install.sh` (it also builds the community styles), then
+restart the browser once. The extension uses the host whenever file URL access
+is off. It works with the release zip too, which keeps the same extension ID.
 
 ### Notes
 
@@ -159,7 +169,21 @@ npm run test:e2e         # headless Chromium: engine on a light page, the real
 
 The end-to-end run uses throwaway profiles and a throwaway theme folder. It
 doesn't touch your real ones, and nothing leaves the machine: `paste.rs`
-resolves to a local server.
+resolves to a local server. `OWT_EXTENSION=<folder> npm run test:e2e` runs
+the same checks against another copy, such as an unzipped release.
+
+## Releasing
+
+1. Bump `version` in both `extension/manifest.json` and `package.json`.
+2. Commit, then tag and push: `git tag v0.2.0 && git push origin master v0.2.0`.
+
+The release workflow runs the tests, builds the community styles, and
+publishes a GitHub release with two zips: one to load unpacked, and a
+`-store` one for the Chrome Web Store (no manifest `key`). `npm run package`
+builds the same zips locally into `dist/`. Store listing text, permission
+justifications and the privacy policy are in
+[docs/chrome-web-store.md](docs/chrome-web-store.md) and
+[PRIVACY.md](PRIVACY.md).
 
 ## Adding an adapter
 

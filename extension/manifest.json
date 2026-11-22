@@ -3,8 +3,15 @@
   "name": "Omarchy Web Theme",
   "version": "0.1.0",
   "description": "Repaints websites in your current Omarchy theme, live.",
+  "homepage_url": "https://github.com/ayandexyz/omarchy-web-theme",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAspSUjO7u5bjOK7L1XxUxRWFw7PpwHvk0cdkJIjh6JO3sUMl1Oz9Ng90zvkkFMzGNhN1wcaRqTxlK7I/M+q8aYTOSKEuDAR7yqc6XCma959GpA6KTe8GASl81Hs0uvX3uMjJqjS83kWqQj8pIp+d3ZJsUbGoz6VKkc7hh4bQ1EJHu5KZd6bwOnDB8NesbLZR9NjIG1n7lTqV8Nz9xCwp6CUq3yHbyfaOHgZWXBGdZa03mtZj9YckiDeJqa9ZovBS6aiJ7SN14GBH6zvipAL8PUCMK1i51Qyy7tu1Vl9wOnd9AP78xt5IZLlKcIxwTfNV/9LPo+X3Pn3vx7s//NpQLfwIDAQAB",
-  "permissions": ["nativeMessaging", "storage", "alarms", "activeTab"],
+  "permissions": ["nativeMessaging", "storage", "alarms"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
@@ -20,6 +27,12 @@
   ],
   "action": {
     "default_title": "Omarchy Web Theme",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
     "default_popup": "popup/popup.html"
   }
 }
